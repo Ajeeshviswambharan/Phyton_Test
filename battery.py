@@ -12,6 +12,7 @@ solution=sim.solve([0, 3600])  # 1-hour simulation
 time = solution["Time [s]"].entries
 voltage = solution["Terminal voltage [V]"].entries
 
+
 # Save to CSV
 df = pd.DataFrame({
     "Time (s)": time,
