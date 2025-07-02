@@ -5,38 +5,59 @@ import matplotlib.pyplot as plt
 
 # Load model and parameter values
 model = pybamm.lithium_ion.SPM()
-param = model.default_parameter_values
+param = pybamm.ParameterValues("Chen2020")
+#param = model.default_parameter_values
 
+# Optionally adjust voltage cutoffs per cell (if needed)
+param["Lower voltage cut-off [V]"] = 2 # Cell-level cutoff
+param["Upper voltage cut-off [V]"] = 4.2
+param["Current function [A]"] = 1  # Discharge at 1 A
+param["Nominal cell capacity [A.h]"]= 100/4
+#param["Nominal cell capacity [A.h]"] = 5  # Change capacity to 5 Ah
 # Create and solve the simulation
 sim = pybamm.Simulation(model, parameter_values=param)
-solution=sim.solve([0, 3600])  # 1-hour simulation
-time = solution["Time [s]"].entries
-voltage = solution["Terminal voltage [V]"].entries
 
+solution=sim.solve([0, 36000])  # 10-hour simulation
+# Number of cells in series for 12V battery pack
+n_cells = 4
+voltage_single_cell = solution["Terminal voltage [V]"].entries
+voltage_pack = voltage_single_cell * n_cells  # 12V pack (4 cells)
+
+
+
+
+time = solution["Time [s]"].entries
 # Compute SOC manually for SPM
 capacity = param["Nominal cell capacity [A.h]"]
 discharge = solution["Discharge capacity [A.h]"].entries
 soc = 1 - discharge / capacity
 
+#This confirms that it hit the voltage cutoff.
+
+
+print("End time:", time[-1], "s")
+print("End voltage:", voltage_pack[-1], "V")
 
 # Save to CSV
 df = pd.DataFrame({
     "Time (s)": time,
-    "Voltage (V)": voltage,
-    "State of Charge": soc
+    "Pack Voltage (V)": voltage_pack,
+    "State of Charge": soc,
+    "Discharge capacity": discharge,
+    "Capacity": capacity
 })
 
-df.to_csv("battery_simulation_output.csv", index=False)
+df.to_csv("battery_simulation_output_12V.csv", index=False)
 
 # Plot results
 #sim.plot()
 
 plt.figure(figsize=(10, 5))
-plt.plot(time, voltage, label="Voltage (V)")
+plt.plot(time, voltage_pack, label="12V Pack Voltage (V)")
 plt.plot(time, soc, label="State of Charge", linestyle="--")
 plt.xlabel("Time (s)")
 plt.ylabel("Value")
-plt.title("Battery Simulation: Voltage and SOC vs Time")
+plt.title("12V Lithium-Ion Battery Pack Simulation (4 Cells)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
