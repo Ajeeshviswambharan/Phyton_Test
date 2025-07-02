@@ -9,7 +9,7 @@ param = pybamm.ParameterValues("Chen2020")
 #param = model.default_parameter_values
 
 # Optionally adjust voltage cutoffs per cell (if needed)
-param["Lower voltage cut-off [V]"] = 2 # Cell-level cutoff
+param["Lower voltage cut-off [V]"] = 2.8 # Cell-level cutoff
 param["Upper voltage cut-off [V]"] = 4.2
 param["Current function [A]"] = 1  # Discharge at 1 A
 param["Nominal cell capacity [A.h]"]= 100/4
@@ -19,7 +19,7 @@ sim = pybamm.Simulation(model, parameter_values=param)
 
 solution=sim.solve([0, 36000])  # 10-hour simulation
 # Number of cells in series for 12V battery pack
-n_cells = 4
+n_cells = 3
 voltage_single_cell = solution["Terminal voltage [V]"].entries
 voltage_pack = voltage_single_cell * n_cells  # 12V pack (4 cells)
 
@@ -57,7 +57,7 @@ plt.plot(time, voltage_pack, label="12V Pack Voltage (V)")
 plt.plot(time, soc, label="State of Charge", linestyle="--")
 plt.xlabel("Time (s)")
 plt.ylabel("Value")
-plt.title("12V Lithium-Ion Battery Pack Simulation (4 Cells)")
+plt.title("12V Lithium-Ion Battery Pack Simulation (3 Cells)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
