@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load model and parameter values
-model = pybamm.lithium_ion.SPM()
+#model = pybamm.lithium_ion.SPM()
+model = pybamm.lithium_ion.SPM({"thermal": "lumped"})
 param = pybamm.ParameterValues("Chen2020")
 #param = model.default_parameter_values
 
@@ -17,13 +18,15 @@ param["Nominal cell capacity [A.h]"]= 100/4
 # Create and solve the simulation
 sim = pybamm.Simulation(model, parameter_values=param)
 
-solution=sim.solve([0, 36000])  # 10-hour simulation
+
+t_eval = np.linspace(0, 36000, 100000)  # 1000 points over 10 hours
+solution = sim.solve(t_eval=t_eval)
+
+#solution=sim.solve([0, 36000])  # 10-hour simulation
 # Number of cells in series for 12V battery pack
 n_cells = 3
 voltage_single_cell = solution["Terminal voltage [V]"].entries
 voltage_pack = voltage_single_cell * n_cells  # 12V pack (4 cells)
-
-
 
 
 time = solution["Time [s]"].entries
@@ -31,7 +34,9 @@ time = solution["Time [s]"].entries
 capacity = param["Nominal cell capacity [A.h]"]
 discharge = solution["Discharge capacity [A.h]"].entries
 soc = 1 - discharge / capacity
-
+voltage = solution["Terminal voltage [V]"].entries
+current = solution["Current [A]"].entries
+temperature = solution["X-averaged cell temperature [K]"].entries
 #This confirms that it hit the voltage cutoff.
 
 
@@ -41,10 +46,12 @@ print("End voltage:", voltage_pack[-1], "V")
 # Save to CSV
 df = pd.DataFrame({
     "Time (s)": time,
+    "Terminal voltage [V]": voltage,
     "Pack Voltage (V)": voltage_pack,
+    "Current (A)": current,
+    "Temperature (C)": temperature - 273.15,
     "State of Charge": soc,
-    "Discharge capacity": discharge,
-    "Capacity": capacity
+    "Discharge capacity": discharge
 })
 
 df.to_csv("battery_simulation_output_12V.csv", index=False)
