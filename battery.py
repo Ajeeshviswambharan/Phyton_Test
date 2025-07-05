@@ -19,7 +19,7 @@ param["Nominal cell capacity [A.h]"]= 100/4
 sim = pybamm.Simulation(model, parameter_values=param)
 
 
-t_eval = np.linspace(0, 36000, 100000)  # 1000 points over 10 hours
+t_eval = np.linspace(0, 36000, 1000000)  # 1000 points over 10 hours
 solution = sim.solve(t_eval=t_eval)
 
 #solution=sim.solve([0, 36000])  # 10-hour simulation
